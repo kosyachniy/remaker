@@ -9,6 +9,11 @@ X = {
 }
 
 
+def func(arg: int, kwarg: dict = None):
+    """ Func """
+    return arg
+
+
 __version__ = '1.0'
 
 __all__ = (

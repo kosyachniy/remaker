@@ -53,6 +53,7 @@ def process_file(source_path):
     source_lines += source_data.count("\n")
 
     is_comment = False
+    is_skipped = False
     for row in source_data.split("\n"):
         row_strip = row.strip()
 
@@ -61,7 +62,23 @@ def process_file(source_path):
             is_comment = not is_comment
             if not is_comment:
                 continue
-        if is_comment or (row_strip and row_strip[0] == "#"):
+        if (
+            is_comment
+            or (row_strip and row_strip[0] == "#")
+            or (len(row_strip) >= 3 and row_strip[:3] == "\"\"\"")
+        ):
+            continue
+
+        # Lib data
+        if "__version__" in row:
+            continue
+        if "__all__" in row:
+            if not any(i in row for i in {")", "}"}):
+                is_skipped = True
+            continue
+        if is_skipped:
+            if any(i in row for i in {")", "}"}):
+                is_skipped = False
             continue
 
         # Libs

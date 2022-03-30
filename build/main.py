@@ -5,10 +5,7 @@ X = {
 }
 
 
-__version__ = '1.0'
-
-__all__ = (
-    'X',
-)
+def func(arg: int, kwarg: dict = None):
+    return arg
 
 print(X)
