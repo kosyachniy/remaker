@@ -33,10 +33,7 @@ def _args():
     return parser.parse_args()
 
 
-def main(args: argparse.Namespace):
-    source_path = args.source
-    target_path = args.target
-
+def process_file(source_path):
     target_data = ""
     source_lines = 1
     source_files = 1
@@ -62,31 +59,46 @@ def main(args: argparse.Namespace):
         # Comments
         if row_strip == "\"\"\"":
             is_comment = not is_comment
+            if not is_comment:
+                continue
         if is_comment or (row_strip and row_strip[0] == "#"):
             continue
 
         # Libs
-        if 'from' in row and 'import' in row:
+        if "from" in row and "import" in row:
             lib_name = re.sub(r'^.*from +([a-z.]+) +import.*$', r'\1', row)
 
             # TODO: nested libs
             if lib_name in source_libs:
                 lib_path = f"{source_dir}/{lib_name}/__init__.py" # FIXME
+                lib_data, lib_lines, lib_files, res_lines, res_files = \
+                    process_file(lib_path)
 
-                with open(lib_path, 'r') as file:
-                    source_data = file.read()
-                source_files += 1
-                source_lines += source_data.count("\n")
+                target_data += lib_data
+                source_lines += lib_lines
+                source_files += lib_files
 
+                continue
+
+        #
         target_data += row + "\n"
 
     target_lines += target_data.count("\n")
 
     # Delete last
-    target_data = target_data[:-1]
+    target_data = target_data.strip()
+
+    return target_data, source_lines, source_files, target_lines, target_files
+
+def main(args: argparse.Namespace):
+    source_path = args.source
+    target_path = args.target
+
+    target_data, source_lines, source_files, target_lines, target_files = \
+        process_file(source_path)
 
     with open(target_path, 'w') as file:
-        print(target_data, end="", file=file)
+        print(target_data, file=file)
 
     print(
         f"Compressed {source_lines} lines in {source_files} files"
